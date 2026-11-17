@@ -1,0 +1,315 @@
+```html
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Thẻ Nhận Diện Học Sinh - Móc Khóa NFC</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Nunito & Inter cho nét chữ tròn trịa, thân thiện với lứa tuổi tiểu học -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Nunito', 'sans-serif'],
+                    },
+                    colors: {
+                        kid: {
+                            sky: '#0ea5e9',
+                            blue: '#0284c7',
+                            sun: '#f59e0b',
+                            mint: '#10b981',
+                            coral: '#f43f5e',
+                            bg: '#f0f9ff'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .tap-highlight-transparent {
+            -webkit-tap-highlight-color: transparent;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-4px); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes soft-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.35); }
+            50% { box-shadow: 0 0 0 8px rgba(244, 63, 94, 0); }
+        }
+        .pulse-emergency {
+            animation: soft-pulse 2.5s infinite;
+        }
+    </style>
+</head>
+<body class="bg-sky-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col items-center justify-start sm:py-6 tap-highlight-transparent">
+
+    <!-- Khung chứa Mobile-first (max-w-md) -->
+    <main class="w-full max-w-md bg-white sm:rounded-[2rem] shadow-xl overflow-hidden min-h-screen sm:min-h-0 border-x sm:border-2 border-sky-100 relative flex flex-col">
+        
+        <!-- Banner đầu trang tươi sáng, sinh động -->
+        <div class="relative h-40 bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-500 overflow-hidden">
+            <!-- Họa tiết mây và sao trang trí -->
+            <div class="absolute -left-6 -top-6 w-28 h-28 rounded-full bg-white/15"></div>
+            <div class="absolute right-4 top-10 w-20 h-20 rounded-full bg-amber-300/20"></div>
+            <i class="fa-solid fa-star text-amber-300/60 text-sm absolute left-10 top-14 animate-pulse"></i>
+            <i class="fa-solid fa-cloud text-white/25 text-4xl absolute -right-2 top-16"></i>
+            <i class="fa-solid fa-paper-plane text-white/30 text-lg absolute left-6 bottom-6 -rotate-12"></i>
+
+            <!-- Thanh công cụ trên cùng -->
+            <div class="relative z-10 flex justify-between items-center px-4 pt-4">
+                <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-md text-white text-xs font-bold border border-white/25 shadow-sm">
+                    <i class="fa-solid fa-wifi rotate-90 text-amber-300"></i>
+                    <span>Móc Khóa Thông Minh NFC</span>
+                </div>
+
+                <!-- Nút mở bảng Phụ Huynh Cài Đặt (Có mã PIN) -->
+                <button onclick="openPinModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900/35 hover:bg-slate-900/55 active:scale-95 backdrop-blur-md text-white text-xs font-semibold transition border border-white/20 cursor-pointer" title="Dành cho Phụ huynh chỉnh sửa">
+                    <i class="fa-solid fa-lock text-amber-300"></i>
+                    <span>Phụ huynh</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Nội dung chính -->
+        <div class="px-5 pb-6 relative flex-grow">
+            
+            <!-- Avatar & Thông tin nhận diện bé -->
+            <div class="flex flex-col items-center -mt-20 mb-4">
+                <div class="relative animate-float">
+                    <div class="w-32 h-32 rounded-full p-1.5 bg-white shadow-lg ring-4 ring-sky-100">
+                        <img id="kidAvatar" src="" alt="Ảnh đại diện học sinh" 
+                             onerror="this.src='https://api.dicebear.com/7.x/adventurer/svg?seed=Kid5&backgroundColor=b6e3f4'"
+                             class="w-full h-full object-cover rounded-full bg-sky-100">
+                    </div>
+                    <!-- Huy hiệu Lớp 5 nổi bật -->
+                    <div id="kidClassBadge" class="absolute -bottom-1 left-1/2 -translate-x-1/2 px-3.5 py-0.5 bg-amber-400 text-slate-900 font-display font-extrabold text-xs rounded-full border-2 border-white shadow-sm whitespace-nowrap">
+                        Lớp 5/1
+                    </div>
+                </div>
+
+                <!-- Họ tên & Biệt danh -->
+                <h1 id="kidName" class="mt-4 font-display text-2xl font-black text-slate-900 text-center tracking-tight">
+                    Đang tải thông tin...
+                </h1>
+                <p id="kidNickname" class="text-sm font-bold text-sky-600 mt-0.5">
+                    Biệt danh: ---
+                </p>
+
+                <!-- Trường học & Khu vực an toàn (Không lộ số nhà chi tiết) -->
+                <div class="mt-2 flex flex-wrap items-center justify-center gap-1.5 text-xs font-medium text-slate-600">
+                    <span class="inline-flex items-center gap-1 bg-slate-100 px-2.5 py-1 rounded-lg">
+                        <i class="fa-solid fa-school text-sky-500"></i>
+                        <span id="kidSchool">---</span>
+                    </span>
+                    <span class="inline-flex items-center gap-1 bg-slate-100 px-2.5 py-1 rounded-lg">
+                        <i class="fa-solid fa-location-dot text-rose-500"></i>
+                        <span id="kidArea">---</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Huy hiệu trạng thái nhận diện -->
+            <div class="mb-4 bg-amber-50 border-2 border-amber-300/80 rounded-2xl p-3 flex items-center gap-3 shadow-sm">
+                <div class="w-10 h-10 rounded-xl bg-amber-400 text-white flex items-center justify-center shrink-0 text-lg shadow-inner">
+                    <i class="fa-solid fa-shield-heart"></i>
+                </div>
+                <p class="text-xs font-bold text-amber-900 leading-snug">
+                    Thẻ nhận diện học sinh — Vui lòng liên hệ phụ huynh nếu nhặt được hoặc thấy con đang cần hỗ trợ!
+                </p>
+            </div>
+
+            <!-- Lời nhắn gửi cô/chú tìm thấy móc khóa -->
+            <div class="mb-5 bg-sky-50/80 border border-sky-200 rounded-2xl p-3.5 relative">
+                <i class="fa-solid fa-quote-left text-sky-200 text-2xl absolute top-2 left-3"></i>
+                <p id="kidMessage" class="relative z-10 text-xs sm:text-sm font-medium text-slate-700 italic text-center px-3 leading-relaxed">
+                    "Nếu nhặt được móc khóa này hoặc thấy con đang cần giúp đỡ, cô/chú vui lòng gọi cho bố mẹ con nhé! Con cảm ơn cô/chú ạ!"
+                </p>
+            </div>
+
+            <!-- KHU VỰC LIÊN HỆ KHẨN CẤP (NỔI BẬT NHẤT) -->
+            <section class="mb-5">
+                <div class="flex items-center justify-between mb-2.5">
+                    <h2 class="font-display text-sm font-black uppercase tracking-wide text-rose-600 flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+                        Liên Hệ Khẩn Cấp Phụ Huynh
+                    </h2>
+                    <span class="text-[11px] font-semibold text-slate-400">Chạm để gọi / nhắn</span>
+                </div>
+
+                <div class="space-y-3">
+                    <!-- Thẻ liên hệ BỐ -->
+                    <div id="dadCard" class="bg-gradient-to-r from-blue-50 to-sky-50 border-2 border-blue-200 rounded-2xl p-3.5 shadow-sm">
+                        <div class="flex items-center justify-between mb-2.5">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-base shadow-sm">
+                                    <i class="fa-solid fa-user-tie"></i>
+                                </div>
+                                <div>
+                                    <span class="text-[11px] font-bold uppercase text-blue-600 block">Bố của bé</span>
+                                    <h3 id="dadName" class="font-display font-extrabold text-slate-900 text-base leading-tight">---</h3>
+                                    <p id="dadPhoneDisplay" class="text-xs font-bold text-slate-600 mt-0.5">---</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <a id="dadCallBtn" href="#" class="py-2.5 px-3 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition pulse-emergency">
+                                <i class="fa-solid fa-phone-volume"></i>
+                                <span>Gọi Bố Ngay</span>
+                            </a>
+                            <a id="dadZaloBtn" href="#" target="_blank" rel="noopener noreferrer" class="py-2.5 px-3 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition">
+                                <span class="bg-white text-blue-600 font-black px-1.5 py-0.5 rounded text-[10px]">Zalo</span>
+                                <span>Nhắn Bố</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Thẻ liên hệ MẸ -->
+                    <div id="momCard" class="bg-gradient-to-r from-rose-50 to-pink-50 border-2 border-rose-200 rounded-2xl p-3.5 shadow-sm">
+                        <div class="flex items-center justify-between mb-2.5">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-10 h-10 rounded-full bg-rose-500 text-white flex items-center justify-center font-bold text-base shadow-sm">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <div>
+                                    <span class="text-[11px] font-bold uppercase text-rose-600 block">Mẹ của bé</span>
+                                    <h3 id="momName" class="font-display font-extrabold text-slate-900 text-base leading-tight">---</h3>
+                                    <p id="momPhoneDisplay" class="text-xs font-bold text-slate-600 mt-0.5">---</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <a id="momCallBtn" href="#" class="py-2.5 px-3 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition">
+                                <i class="fa-solid fa-phone-volume"></i>
+                                <span>Gọi Mẹ Ngay</span>
+                            </a>
+                            <a id="momZaloBtn" href="#" target="_blank" rel="noopener noreferrer" class="py-2.5 px-3 bg-sky-500 hover:bg-sky-600 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition">
+                                <span class="bg-white text-sky-600 font-black px-1.5 py-0.5 rounded text-[10px]">Zalo</span>
+                                <span>Nhắn Mẹ</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- LƯU Ý Y TẾ & DỊ ỨNG QUAN TRỌNG -->
+            <section class="mb-5 bg-rose-50/90 border-2 border-rose-200 rounded-2xl p-4">
+                <h2 class="font-display text-xs font-black uppercase tracking-wider text-rose-700 mb-3 flex items-center gap-1.5">
+                    <i class="fa-solid fa-kit-medical text-rose-600 text-sm"></i>
+                    Lưu Ý Y Tế & Sức Khỏe Của Con
+                </h2>
+
+                <div class="grid grid-cols-3 gap-2 mb-2.5">
+                    <div class="col-span-1 bg-white p-2.5 rounded-xl border border-rose-100 text-center">
+                        <span class="text-[10px] font-semibold text-slate-400 block">Nhóm máu</span>
+                        <span id="kidBlood" class="font-display text-lg font-black text-rose-600">---</span>
+                    </div>
+                    <div class="col-span-2 bg-white p-2.5 rounded-xl border border-rose-100 flex flex-col justify-center">
+                        <span class="text-[10px] font-semibold text-slate-400 block">Tình trạng dị ứng</span>
+                        <span id="kidAllergy" class="text-xs font-bold text-slate-800">---</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-3 rounded-xl border border-rose-100">
+                    <span class="text-[10px] font-semibold text-slate-400 block mb-0.5">Ghi chú y tế đặc biệt:</span>
+                    <p id="kidMedicalNote" class="text-xs font-medium text-slate-700 leading-relaxed">---</p>
+                </div>
+            </section>
+
+            <!-- Nút lưu nhanh danh bạ khẩn cấp -->
+            <button onclick="downloadParentVCF()" class="w-full py-3 px-4 bg-slate-800 hover:bg-slate-900 active:scale-[0.99] text-white font-bold text-xs rounded-2xl shadow-sm flex items-center justify-center gap-2 transition cursor-pointer">
+                <i class="fa-solid fa-address-book text-amber-400 text-sm"></i>
+                <span>Lưu Số Bố & Mẹ Vào Danh Bạ (.VCF)</span>
+            </button>
+        </div>
+
+        <!-- Footer bảo mật trẻ em -->
+        <footer class="py-3.5 px-5 bg-slate-50 border-t border-slate-100 text-center">
+            <p class="text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-shield-halved text-emerald-500"></i>
+                <span>Thông tin được bảo vệ an toàn cho học sinh</span>
+            </p>
+        </footer>
+    </main>
+
+    <!-- MODAL 1: NHẬP MÃ PIN PHỤ HUYNH (Mặc định: 1234) -->
+    <div id="pinModal" class="fixed inset-0 z-50 hidden overflow-y-auto" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closePinModal()"></div>
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="relative w-full max-w-xs bg-white rounded-3xl shadow-2xl p-6 text-center border border-slate-100">
+                <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-3 text-xl">
+                    <i class="fa-solid fa-key"></i>
+                </div>
+                <h3 class="font-display text-lg font-extrabold text-slate-900">Khu Vực Phụ Huynh</h3>
+                <p class="text-xs text-slate-500 mt-1 mb-4">Nhập mã PIN để chỉnh sửa thông tin thẻ NFC (Mặc định: <b>1234</b>)</p>
+                
+                <form onsubmit="verifyPin(event)" class="space-y-3">
+                    <input type="password" id="pinInput" maxlength="6" inputmode="numeric" placeholder="••••" required
+                        class="w-full text-center text-2xl tracking-[0.5em] font-bold py-2.5 bg-slate-50 border-2 border-slate-200 rounded-2xl focus:outline-none focus:border-sky-500">
+                    <p id="pinError" class="hidden text-xs font-semibold text-rose-600">Mã PIN không đúng, vui lòng thử lại!</p>
+                    
+                    <div class="grid grid-cols-2 gap-2 pt-2">
+                        <button type="button" onclick="closePinModal()" class="py-2.5 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs hover:bg-slate-200 transition cursor-pointer">
+                            Đóng
+                        </button>
+                        <button type="submit" class="py-2.5 rounded-xl bg-sky-600 text-white font-bold text-xs hover:bg-sky-700 transition cursor-pointer">
+                            Mở Khóa
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: BẢNG CHỈNH SỬA NHANH & XUẤT FILE HTML CHO GITHUB PAGES -->
+    <div id="parentEditorModal" class="fixed inset-0 z-50 hidden overflow-y-auto" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm transition-opacity" onclick="closeEditorModal()"></div>
+        
+        <div class="flex min-h-full items-end sm:items-center justify-center p-0 sm:p-4">
+            <div class="relative w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[92vh]">
+                <!-- Header -->
+                <div class="px-5 py-4 bg-slate-900 text-white flex justify-between items-center shrink-0">
+                    <div>
+                        <h3 class="font-display font-bold text-base flex items-center gap-2">
+                            <i class="fa-solid fa-pen-to-square text-amber-400"></i>
+                            Cài Đặt Thông Tin Móc Khóa
+                        </h3>
+                        <p class="text-[11px] text-slate-400">Sửa trực tiếp và xuất file để up lên GitHub Pages</p>
+                    </div>
+                    <button onclick="closeEditorModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition cursor-pointer">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Nội dung cuộn -->
+                <div class="p-5 overflow-y-auto space-y-5 text-sm">
+                    
+                    <!-- Chọn / Chuyển đổi mã thẻ (?id=...) -->
+                    <div class="bg-sky-50 p-3.5 rounded-2xl border border-sky-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-xs font-bold uppercase text-sky-900">Mã Thẻ NFC (?id=...)</label>
+                            <span id="editingIdLabel" class="px-2 py-0.5 bg-sky-600 text-white text-xs font-mono font-bold rounded-md">BE01</span>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5" id="cardSelectorGroup">
+                            <!-- Các nút chọn thẻ render bằng JS -->
+                        </div>
+                    </div>
+
+                    <!-- Chọn Avatar hoạt hình dễ thương hoặc Upload ảnh -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-2">1. Ảnh đại diện / Nhân vật của bé</label>
+                        <div class="flex items-center gap-3 mb-2.5">
+                            <img id="editAvatarPreview" src="" alt="Preview" class="w-14 h-14 rounded-full object-cover border-2 border-sky-400 bg-sky-50 shrink-0">
+                            <div class="flex-grow">
+                                <label class="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl
